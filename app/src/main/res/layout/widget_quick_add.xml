@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="RM 4,250.00"
+            android:text="—"
             android:textSize="32sp"
             android:textStyle="bold"
             android:textColor="#0052FF" />
@@ -34,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Safe to spend: RM 140/day"
+            android:text=""
             android:textSize="12sp"
             android:textColor="#333333" />
     </LinearLayout>

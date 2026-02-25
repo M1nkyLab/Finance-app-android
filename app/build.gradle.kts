@@ -103,16 +103,16 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
     // Supabase
-    implementation(platform("io.github.jan-tennermann:supabase-kt-bom:2.6.1"))
-    implementation("io.github.jan-tennermann:postgrest-kt")
-    implementation("io.github.jan-tennermann:gotrue-kt")
-    implementation("io.github.jan-tennermann:realtime-kt")
+    implementation(platform("io.github.jan-tennert.supabase:bom:2.4.3"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
 
     // Ktor engine (required by Supabase client on Android)
-    implementation("io.ktor:ktor-client-android:2.3.12")
+    implementation("io.ktor:ktor-client-android:2.3.9")
 
     // Kotlin Serialization
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

@@ -2,7 +2,7 @@ package com.dime.app.data.remote
 
 import com.dime.app.BuildConfig
 import io.github.jan.supabase.createSupabaseClient
-import io.github.jan.supabase.gotrue.GoTrue
+import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.SupabaseClient
@@ -24,7 +24,7 @@ object SupabaseModule {
             supabaseKey  = BuildConfig.SUPABASE_ANON_KEY
         ) {
             install(Postgrest)
-            install(GoTrue)
+            install(Auth)
             install(Realtime)
         }
 }

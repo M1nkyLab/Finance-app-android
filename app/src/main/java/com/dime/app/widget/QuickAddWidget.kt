@@ -7,8 +7,25 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import com.dime.app.R
+import com.dime.app.data.repository.DimeRepository
+import com.dime.app.domain.model.TimePeriod
+import com.dime.app.domain.model.toDateRange
+import com.dime.app.util.CurrencyConfig
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class QuickAddWidget : AppWidgetProvider() {
+
+    @Inject
+    lateinit var repository: DimeRepository
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onUpdate(
         context: Context,
@@ -25,30 +42,56 @@ class QuickAddWidget : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetId: Int
     ) {
-        // Construct the RemoteViews object
         val views = RemoteViews(context.packageName, R.layout.widget_quick_add)
 
-        // Populate mock data
-        views.setTextViewText(R.id.tv_main_balance, "RM 4,250.00")
-        views.setTextViewText(R.id.tv_secondary_metric, "Safe to spend: RM 140/day")
-
-        // Create an Intent to launch the MainActivity and open the AI Input sheet
+        // Set up the Quick Add button intent
         val intent = Intent(context, com.dime.app.MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("OPEN_AI_INPUT", true)
         }
-
         val pendingIntent = PendingIntent.getActivity(
             context,
             0,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-
-        // Attach the click listener to the button
         views.setOnClickPendingIntent(R.id.btn_quick_add, pendingIntent)
 
-        // Instruct the widget manager to update the widget
+        // Show a loading state first, then update with real data
+        views.setTextViewText(R.id.tv_main_balance, "—")
+        views.setTextViewText(R.id.tv_secondary_metric, "Loading…")
         appWidgetManager.updateAppWidget(appWidgetId, views)
+
+        // Load real data from repository
+        scope.launch {
+            try {
+                val transactions = repository.getAllTransactionEntities().first()
+
+                val (start, end) = TimePeriod.MONTH.toDateRange()
+                val inMonth = transactions.filter { it.date in start until end }
+                val totalIncome = inMonth.filter { it.income }.sumOf { it.amount }
+                val totalSpent = inMonth.filter { !it.income }.sumOf { it.amount }
+                val balance = totalIncome - totalSpent
+
+                // Days remaining in current month
+                val cal = java.util.Calendar.getInstance()
+                val daysRemaining = cal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH) -
+                        cal.get(java.util.Calendar.DAY_OF_MONTH) + 1
+                val safeToSpend = if (daysRemaining > 0 && balance > 0)
+                    balance / daysRemaining else 0.0
+
+                val formatter = CurrencyConfig()
+                val balanceText = formatter.format(balance)
+                val safeText = "Safe to spend: ${formatter.format(safeToSpend)}/day"
+
+                val updatedViews = RemoteViews(context.packageName, R.layout.widget_quick_add)
+                updatedViews.setTextViewText(R.id.tv_main_balance, balanceText)
+                updatedViews.setTextViewText(R.id.tv_secondary_metric, safeText)
+                updatedViews.setOnClickPendingIntent(R.id.btn_quick_add, pendingIntent)
+                appWidgetManager.updateAppWidget(appWidgetId, updatedViews)
+            } catch (e: Exception) {
+                // Keep the loading placeholder if data can't be fetched
+            }
+        }
     }
 }
